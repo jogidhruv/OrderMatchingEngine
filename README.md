@@ -1,4 +1,4 @@
-# Qode — Multi-Symbol Order Matching Engine
+# Multi-Symbol Order Matching Engine
 
 A C++20 electronic order matching engine supporting multiple symbols, each with an
 independent order book, price-time priority matching, and a multi-producer /
