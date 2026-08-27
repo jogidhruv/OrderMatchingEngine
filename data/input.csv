@@ -1,0 +1,121 @@
+# Sample command stream. One command per line; '#' and blank lines are ignored.
+#   NEW,client_id,client_order_id,symbol,side,type,price,qty
+#   CANCEL,client_id,client_order_id,symbol
+#   MODIFY,client_id,client_order_id,symbol,price,qty
+# Market orders ignore the price field (0 used below).
+
+# --- AAPL: resting asks, then a series of buys demonstrating fills ---
+NEW,1,101,AAPL,SELL,LIMIT,150,100
+NEW,1,102,AAPL,SELL,LIMIT,151,50
+
+# Partial fill: 60 @150 vs maker 101 (40 remains resting).
+NEW,2,201,AAPL,BUY,LIMIT,150,60
+# Market order consumes the remaining 40 @150 (maker 101 depleted).
+NEW,2,202,AAPL,BUY,MARKET,0,40
+# Complete fill against maker 102: 50 @151.
+NEW,2,203,AAPL,BUY,LIMIT,151,50
+
+# IOC: 30 fills @152, remaining 20 cancelled (never rests).
+NEW,1,103,AAPL,SELL,LIMIT,152,30
+NEW,3,301,AAPL,BUY,IOC,152,50
+
+# Cancel a resting order.
+NEW,4,401,AAPL,BUY,LIMIT,148,25
+CANCEL,4,401,AAPL
+
+# Modify: reprice (resets priority) and grow quantity.
+NEW,4,402,AAPL,BUY,LIMIT,147,25
+MODIFY,4,402,AAPL,149,30
+
+# Self-trade prevention: same client crosses its own resting ask -> no trade.
+NEW,5,501,AAPL,SELL,LIMIT,155,20
+NEW,5,502,AAPL,BUY,LIMIT,155,20
+
+# --- MSFT: a clean full fill on another symbol (independent book) ---
+NEW,6,601,MSFT,SELL,LIMIT,300,100
+NEW,7,701,MSFT,BUY,LIMIT,300,100
+
+# --- Error cases ---
+# Synchronous rejects (written to out/errors.log):
+NEW,8,801,TSLA,BUY,LIMIT,100,10
+NEW,8,802,AAPL,BUY,LIMIT,0,10
+NEW,8,803,AAPL,BUY,LIMIT,100,0
+# Asynchronous rejects (written to the symbol's log, e.g. out/AAPL.log):
+NEW,4,402,AAPL,BUY,LIMIT,140,10
+CANCEL,9,901,AAPL
+MODIFY,9,902,AAPL,150,10
+# Parse errors (written to out/errors.log):
+NEW,10,1001,AAPL,BUY,LIMIT,100
+FOO,1,2,AAPL
+
+# ===========================================================================
+# GOOG correctness scenarios. Each block starts from an empty book and cleans
+# up after itself, so they can be verified independently by eyeballing GOOG.log.
+# Expected trades reference the MAKER's global order id (assigned in input order,
+# so an earlier NEW has a smaller id -- how you confirm price-TIME priority).
+# ===========================================================================
+
+# --- A: price-time priority (FIFO at equal price) --------------------------
+# Two sells rest at the SAME price 200; the earlier one (40,4001) must fill first.
+NEW,40,4001,GOOG,SELL,LIMIT,200,10
+NEW,41,4002,GOOG,SELL,LIMIT,200,10
+# Buy 10 @200 -> hits the EARLIER maker 4001 (smaller global id in the TRADE).
+NEW,42,4003,GOOG,BUY,LIMIT,200,10
+# Next buy 10 @200 -> hits the later maker 4002. Book empty afterwards.
+NEW,42,4004,GOOG,BUY,LIMIT,200,10
+
+# --- B: best-price priority + multi-level market sweep ---------------------
+# Three ask levels; a market buy sweeps best-first across all three.
+NEW,43,4301,GOOG,SELL,LIMIT,201,5
+NEW,43,4302,GOOG,SELL,LIMIT,202,5
+NEW,43,4303,GOOG,SELL,LIMIT,203,5
+# Market buy 12 -> 3 fills: 5@201, 5@202, 2@203 (203 leaves 3 resting).
+NEW,44,4401,GOOG,BUY,MARKET,0,12
+# Clean up the 3 left on 203.
+CANCEL,43,4303,GOOG
+
+# --- C: SELL-side taker crossing resting BIDs; trade at MAKER price ---------
+NEW,45,4501,GOOG,BUY,LIMIT,100,10
+NEW,45,4502,GOOG,BUY,LIMIT,99,10
+# Aggressive sell @98 for 15 -> 10@100 then 5@99 (maker prices, best bid first).
+NEW,46,4601,GOOG,SELL,LIMIT,98,15
+# Clean up remaining 5 on bid 99.
+CANCEL,45,4502,GOOG
+
+# --- D: trade price = resting price when taker is more aggressive -----------
+NEW,47,4701,GOOG,SELL,LIMIT,150,10
+# Buy @160 (crosses) -> trade executes at the resting 150, NOT 160. Book empty.
+NEW,48,4801,GOOG,BUY,LIMIT,160,10
+
+# --- E: modify quantity DECREASE retains time priority ---------------------
+NEW,49,4901,GOOG,SELL,LIMIT,300,20
+NEW,50,5001,GOOG,SELL,LIMIT,300,20
+# Shrink the earlier order (same price) -> keeps front-of-queue priority.
+MODIFY,49,4901,GOOG,300,10
+# Buy 10 @300 -> still hits 4901 first (priority retained).
+NEW,51,5101,GOOG,BUY,LIMIT,300,10
+# Clean up the later maker.
+CANCEL,50,5001,GOOG
+
+# --- F: modify quantity INCREASE resets time priority ----------------------
+NEW,52,5201,GOOG,SELL,LIMIT,400,10
+NEW,53,5301,GOOG,SELL,LIMIT,400,10
+# Grow the earlier order (same price) -> loses its place, goes behind 5301.
+MODIFY,52,5201,GOOG,400,15
+# Buy 10 @400 -> now hits the later maker 5301 first (priority reset).
+NEW,54,5401,GOOG,BUY,LIMIT,400,10
+# Clean up the re-queued (grown) order.
+CANCEL,52,5201,GOOG
+
+# --- G: modify-to-zero is treated as a cancel ------------------------------
+NEW,55,5501,GOOG,BUY,LIMIT,90,10
+# Quantity 0 removes the order. Book empty (no MD asks/bids).
+MODIFY,55,5501,GOOG,90,0
+
+# --- H: cancelling an already-FILLED order is ignored gracefully -----------
+NEW,56,5601,GOOG,SELL,LIMIT,120,10
+NEW,57,5701,GOOG,BUY,LIMIT,120,10
+# 5601 is fully filled and gone -> this cancel is an async UNKNOWN reject.
+CANCEL,57,57011,GOOG
+CANCEL,57,57011,MSFT
+

@@ -1,0 +1,20 @@
+==============================================
+  Matching Engine Benchmark
+==============================================
+Producers          : 8
+Orders / producer  : 200000
+Symbols            : 4
+Total submitted    : 1600000
+Latency samples    : 1600000
+Elapsed            : 0.252008 s
+----------------------------------------------
+Throughput         : 6349001 orders/sec
+----------------------------------------------
+Latency (end-to-end, enqueue -> processed)
+  Mean             : 16.994 us
+  P50              : 11.708 us
+  P75              : 18.666 us
+  P90              : 28.75 us
+  P99              : 106.959 us
+  Max              : 883.792 us
+==============================================

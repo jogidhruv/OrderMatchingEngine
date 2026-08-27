@@ -1,0 +1,4 @@
+MarketData MSFT bid - - ask 300 100
+TRADE MSFT 14 15 300 100
+MarketData MSFT bid - - ask - -
+REJECT UnknownOrderId MSFT 57 57011
