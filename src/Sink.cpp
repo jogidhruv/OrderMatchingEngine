@@ -1,12 +1,13 @@
+#include <utility>
+
 #include "engine/Sink.hpp"
 
 namespace Engine {
 
-    Sink::Sink(const std::string& symbol, std::ostream& out, const size_t batch_size, const size_t capacity)
+    Sink::Sink(std::string symbol, std::ostream& out, const size_t capacity)
         : queue_(capacity),
           out_(out),
-          symbol_(symbol),
-          batch_size_(batch_size) {}
+          symbol_(std::move(symbol)) {}
 
     void Sink::publish(MatchingResult result) {
         queue_.push(std::move(result));
@@ -34,46 +35,51 @@ namespace Engine {
         is_stopped_ = true;
     }
 
+    void Sink::ProcessMR(const MatchingResult& mr) const {
+        const auto& result = mr.result;
+        const auto& data = mr.data;
+        if (result.rejectReason != RejectReason::None) {
+            out_ << "REJECT " << to_string(result.rejectReason) << ' ' << symbol_ << ' ' << result.clientId
+                    << ' ' << result.clientOrderId << '\n';
+            return;
+        }
+
+        // One execution-log line per fill.
+        for (const Trade& t : result.trades) {
+            out_ << "TRADE " << symbol_ << ' ' << t.maker_order_id << ' '
+                 << t.taker_order_id << ' ' << t.price << ' ' << t.quantity
+                 << '\n';
+        }
+
+        // One market-data line per book change (top-of-book snapshot).
+        out_ << "MarketData " << symbol_ << " bid ";
+        if (data.has_bid) {
+            out_ << data.bid_price << ' ' << data.bid_quantity;
+        } else {
+            out_ << "- -";
+        }
+        out_ << " ask ";
+        if (data.has_ask) {
+            out_ << data.ask_price << ' ' << data.ask_quantity;
+        } else {
+            out_ << "- -";
+        }
+        out_ << '\n';
+
+    }
+
     void Sink::run() {
-        std::vector<MatchingResult> batch(batch_size_); // Runtime heap allocation once
         while (true) {
-            const size_t n = queue_.drain(batch, batch_size_);
-            if (n == 0) {
-                break; // Stopped
+            if (queue_.is_closed()) {
+                while (auto mr = queue_.pop()) {
+                    ProcessMR(*mr);
+                }
+                break;
             }
 
-            for (std::size_t i = 0; i < n; ++i) {
-                const MatchingResult& r = batch[i];
-
-                if (r.result.rejectReason != RejectReason::None) {
-                    out_ << "REJECT " << to_string(r.result.rejectReason) << ' ' << symbol_ << ' ' << r.result.clientId
-                            << ' ' << r.result.clientOrderId << '\n';
-                    continue;
-                }
-
-                // One execution-log line per fill.
-                for (const Trade& t : r.result.trades) {
-                    out_ << "TRADE " << symbol_ << ' ' << t.maker_order_id << ' '
-                         << t.taker_order_id << ' ' << t.price << ' ' << t.quantity
-                         << '\n';
-                }
-
-                // One market-data line per book change (top-of-book snapshot).
-                out_ << "MarketData " << symbol_ << " bid ";
-                if (r.data.has_bid) {
-                    out_ << r.data.bid_price << ' ' << r.data.bid_quantity;
-                } else {
-                    out_ << "- -";
-                }
-                out_ << " ask ";
-                if (r.data.has_ask) {
-                    out_ << r.data.ask_price << ' ' << r.data.ask_quantity;
-                } else {
-                    out_ << "- -";
-                }
-                out_ << '\n';
+            if (auto mr = queue_.pop()) {
+                ProcessMR(*mr);
             }
-
         }
     }
 }

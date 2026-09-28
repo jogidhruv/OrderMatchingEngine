@@ -6,7 +6,7 @@ namespace Engine {
         return orders_.contains({ order.clientId, order.clientOrderId });
     }
 
-    bool OrderBook::insert(Order& order) {
+    bool OrderBook::insert(OrderTypes& order) {
         if (order.remaining <= 0) {
             return false;
         }
@@ -15,15 +15,19 @@ namespace Engine {
         }
         if (order.is_buy())
         {
-            OrderList& level = bids_[order.price];
-            level.insert(&order);
-            index_.emplace(order.id, &order);
+            auto& level = bids_[order.price];
+            level.insert(level.end(), order);
+            //level.insert(&order);
+            //index_.emplace(order.id, &order);
+            index_.emplace(order.id, --level.end());
         }
         else
         {
-            OrderList& level = asks_[order.price];
-            level.insert(&order);
-            index_.emplace(order.id, &order);
+            auto& level = asks_[order.price];
+            level.insert(level.end(), order);
+            //level.insert(&order);
+            //index_.emplace(order.id, &order);
+            index_.emplace(order.id, --level.end());
         }
 
         // Duplicate orders are already checked before reaching here
@@ -35,7 +39,7 @@ namespace Engine {
         // Resolve the client key -> global order id. Absent means there is no
         // active order to remove (e.g. a cancel of an already-completed order):
         // return false and leave every structure untouched.
-        auto oit = orders_.find({ clientId, clientOrderId });
+        const auto oit = orders_.find({ clientId, clientOrderId });
         if (oit == orders_.end()) {
             return false;
         }
@@ -52,8 +56,9 @@ namespace Engine {
         if (node->is_buy())
         {
             auto level = bids_.find(node->price);
-            level->second.remove(node);
-            order_pool_.release(node);
+            level->second.erase(node);
+            //level->second.remove(node);
+            //order_pool_.release(node);
             if (level->second.empty())
             {
                 bids_.erase(level);
@@ -62,8 +67,9 @@ namespace Engine {
         else
         {
             auto level = asks_.find(node->price);
-            level->second.remove(node);
-            order_pool_.release(node);
+            level->second.erase(node);
+            //level->second.remove(node);
+            //order_pool_.release(node);
             if (level->second.empty())
             {
                 asks_.erase(level);
@@ -74,7 +80,7 @@ namespace Engine {
         return true;
     }
 
-    Order* OrderBook::find(const uint64_t clientId, const uint64_t clientOrderId) {
+    OrderTypes* OrderBook::find(const uint64_t clientId, const uint64_t clientOrderId) {
         auto oit = orders_.find({ clientId, clientOrderId });
         if (oit == orders_.end()) {
             return nullptr;
@@ -83,12 +89,12 @@ namespace Engine {
         return it == index_.end() ? nullptr : &(*it->second);
     }
 
-    Order* OrderBook::best_bid() {
-        return bids_.empty() ? nullptr : bids_.begin()->second.front();
+    OrderTypes* OrderBook::best_bid() {
+        return bids_.empty() ? nullptr : &bids_.begin()->second.front();
     }
 
-    Order* OrderBook::best_ask() {
-        return asks_.empty() ? nullptr : asks_.begin()->second.front();
+    OrderTypes* OrderBook::best_ask() {
+        return asks_.empty() ? nullptr : &asks_.begin()->second.front();
     }
 
     bool OrderBook::empty() const {

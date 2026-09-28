@@ -2,12 +2,15 @@
 #include <string>
 #include <thread>
 
-#include "ResultQueue.hpp"
+#include "MatchEngineTypes.hpp"
+#include "SPSCQueue.hpp"
 
 namespace Engine {
+    using ResultQueue = SPSCQueue<MatchingResult>;
+
     class Sink {
     public:
-        explicit Sink(const std::string& symbol, std::ostream& out, const size_t batch_size = 256, const size_t capacity = 1024);
+        explicit Sink(std::string  symbol, std::ostream& out, size_t capacity = 1024);
 
         void start();
         void stop();
@@ -17,11 +20,11 @@ namespace Engine {
 
     private:
         void run();  // Runner thread which drains the ResultQueue to log the results
+        void ProcessMR(const MatchingResult& result) const;
 
         ResultQueue queue_;
         std::ostream& out_;
         std::string symbol_;
-        size_t batch_size_;
         std::thread consumer_;
         bool is_started_{false};
         bool is_stopped_{false};

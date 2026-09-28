@@ -1,9 +1,9 @@
 #include <engine/OrderList.hpp>
 
-#include "engine/Order.hpp"
+#include "engine/OrderTypes.hpp"
 
 namespace Engine {
-    void OrderList::insert(Order* order) {
+    void OrderList::insert(OrderTypes* order) {
         if (head_ == nullptr) {
             head_ = order;
             tail_ = order;
@@ -18,7 +18,7 @@ namespace Engine {
         tail_ = order;
     }
 
-    void OrderList::remove(Order* order) {
+    void OrderList::remove(OrderTypes* order) {
         if (order->prev_in_list == nullptr && order->next_in_list == nullptr) {
             head_ = nullptr;
             tail_ = nullptr;
@@ -32,14 +32,14 @@ namespace Engine {
             tail_->next_in_list = nullptr;
         }
         else {
-            Order* prev = order->prev_in_list;
-            Order* next = order->next_in_list;
+            OrderTypes* prev = order->prev_in_list;
+            OrderTypes* next = order->next_in_list;
             prev->next_in_list = next;
             next->prev_in_list = prev;
         }
     }
 
-    Order *OrderList::front() const {
+    OrderTypes *OrderList::front() const {
         return head_;
     }
 

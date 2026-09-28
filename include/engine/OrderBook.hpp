@@ -1,12 +1,11 @@
 #pragma once
 
-#include <engine/Order.hpp>
+#include <engine/OrderTypes.hpp>
 #include <list>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "MarketData.hpp"
 #include "OrderList.hpp"
 #include "OrderPool.hpp"
 
@@ -15,12 +14,12 @@ namespace Engine
     class OrderBook
     {
         public:
-            using AskMap = map<uint64_t, OrderList>;
-            using BidMap = map<uint64_t, OrderList, greater<>>;
+            using AskMap = map<uint64_t, std::list<OrderTypes>>;
+            using BidMap = map<uint64_t, std::list<OrderTypes>, greater<>>;
 
             // Inserts the order into internal structures. Updates AskMap / BidMap, index for quickly retrieving
             // the order for deletions and client-key -> globally unique order ID map.
-            bool insert(Order& order);
+            bool insert(OrderTypes& order);
 
             // Removes the active order identified by the client key
             // (clientId, clientOrderId) from EVERY internal structure: the price
@@ -29,19 +28,19 @@ namespace Engine
             // active order exists.
             bool remove(uint64_t clientId, uint64_t clientOrderId);
 
-            Order* take_from_pool() { return order_pool_.take(); };
+            OrderTypes* take_from_pool() { return order_pool_.take(); };
 
             // Resolves the active order by client key (clientId, clientOrderId).
             // Returns nullptr when it is not currently resting. Used during order
             // modification.
-            [[nodiscard]] Order* find(uint64_t clientId, uint64_t clientOrderId);
+            [[nodiscard]] OrderTypes* find(uint64_t clientId, uint64_t clientOrderId);
 
             // Read Only accesses
             [[nodiscard]] const AskMap& asks() const;
             [[nodiscard]] const BidMap& bids() const;
 
-            [[nodiscard]] Order* best_bid();
-            [[nodiscard]] Order* best_ask();
+            [[nodiscard]] OrderTypes* best_bid();
+            [[nodiscard]] OrderTypes* best_ask();
             [[nodiscard]] bool empty() const;
 
             [[nodiscard]] MarketData top_of_book() const;
@@ -51,7 +50,8 @@ namespace Engine
             AskMap asks_;
             BidMap bids_;
             OrderPool order_pool_;
-            unordered_map<uint64_t, Order*> index_;  // Global unique order ID -> Iterator of the actual Order in the maps
+            //unordered_map<uint64_t, Order*> index_;  // Global unique order ID -> Iterator of the actual Order in the maps
+            unordered_map<uint64_t, std::list<OrderTypes>::iterator> index_;
 
             using Key = std::pair<uint64_t, uint64_t>;
 

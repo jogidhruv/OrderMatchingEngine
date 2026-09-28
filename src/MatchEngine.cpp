@@ -10,7 +10,7 @@ namespace Engine
         return book_;
     }
 
-    void MatchingEngine::execute(Order& maker, Order& taker, vector<Trade>& out) {
+    void MatchingEngine::execute(OrderTypes& maker, OrderTypes& taker, vector<Trade>& out) {
         const uint64_t quantity = min(maker.remaining, taker.remaining);
         const uint64_t price = maker.price;
 
@@ -26,12 +26,12 @@ namespace Engine
         // taker is incoming so it will be handled after all the immediate matches are executed
     }
 
-    void MatchingEngine::match(Order &incoming, vector<Trade> &out, bool& is_self) {
+    void MatchingEngine::match(OrderTypes &incoming, vector<Trade> &out, bool& is_self) {
         const bool is_market = incoming.type == OrderType::Market;
 
         if (incoming.is_buy()) {
             while (incoming.remaining > 0) {
-                Order* maker = book_.best_ask();
+                OrderTypes* maker = book_.best_ask();
 
                 if (maker == nullptr) {
                     break;
@@ -51,7 +51,7 @@ namespace Engine
         }
         else {
             while (incoming.remaining > 0) {
-                Order* maker = book_.best_bid();
+                OrderTypes* maker = book_.best_bid();
 
                 if (maker == nullptr) {
                     break;
@@ -123,25 +123,27 @@ namespace Engine
 
 
     SubmitResult MatchingEngine::place(uint64_t orderId, const OrderRequest& request) {
-        Order* incoming = book_.take_from_pool();
-        incoming->id = orderId;
-        incoming->client_id = request.clientId;
-        incoming->client_order_id = request.clientOrderId;
-        incoming->side = request.side;
-        incoming->type = request.type;
-        incoming->quantity = request.quantity;
-        incoming->remaining = request.quantity;
-        incoming->price = request.price;
-        incoming->timestamp = now_ns();
+        //Order* incoming = book_.take_from_pool();
+        OrderTypes incoming;
+        incoming.id = orderId;
+        incoming.client_id = request.clientId;
+        incoming.client_order_id = request.clientOrderId;
+        incoming.side = request.side;
+        incoming.type = request.type;
+        incoming.quantity = request.quantity;
+        incoming.remaining = request.quantity;
+        incoming.price = request.price;
+        incoming.timestamp = now_ns();
 
         SubmitResult result;
+        result.rejectReason = RejectReason::None;
         result.clientId = request.clientId;
         result.clientOrderId = request.clientOrderId;
         bool is_self = false;
-        match(*incoming, result.trades, is_self);
-        result.filled_quantity = request.quantity - incoming->remaining;
+        match(incoming, result.trades, is_self);
+        result.filled_quantity = request.quantity - incoming.remaining;
 
-        if (incoming->remaining == 0) {
+        if (incoming.remaining == 0) {
             result.status = OrderStatus::FILLED;
         }
         else if (request.type == OrderType::Market || request.type == OrderType::IOC) {
@@ -153,7 +155,7 @@ namespace Engine
             result.status = OrderStatus::CANCELLED;
         }
         else {
-            book_.insert(*incoming);
+            book_.insert(incoming);
             result.status = OrderStatus::RESTING; // Limit remainder rests on the book
         }
 
@@ -165,7 +167,7 @@ namespace Engine
         result.clientId = request.clientId;
         result.clientOrderId = request.clientOrderId;
 
-        Order* resting = book_.find(request.clientId, request.clientOrderId);
+        OrderTypes* resting = book_.find(request.clientId, request.clientOrderId);
         if (resting == nullptr) {
             result.status = OrderStatus::UNKNOWN;
             result.rejectReason = RejectReason::UnknownOrderId;
@@ -197,34 +199,35 @@ namespace Engine
         // Priority-resetting change: pull the order and re-enter it. Copy first
         // because remove() invalidates the resting pointer. The global id is
         // preserved through the copy.
-        Order* replacement = book_.take_from_pool();
-        replacement->client_id = resting->client_id;
-        replacement->client_order_id = resting->client_order_id;
-        replacement->side = resting->side;
-        replacement->type = resting->type;
-        replacement->id = resting->id;
-        replacement->price = new_price;
-        replacement->quantity = new_quantity;
-        replacement->remaining = new_quantity;
-        replacement->timestamp = now_ns();
+        //Order* replacement = book_.take_from_pool();
+        OrderTypes replacement;
+        replacement.client_id = resting->client_id;
+        replacement.client_order_id = resting->client_order_id;
+        replacement.side = resting->side;
+        replacement.type = resting->type;
+        replacement.id = resting->id;
+        replacement.price = new_price;
+        replacement.quantity = new_quantity;
+        replacement.remaining = new_quantity;
+        replacement.timestamp = now_ns();
         book_.remove(resting->client_id, resting->client_order_id);
 
         bool is_self = false;
         if (price_changed) {
             // Only a price change can cross the book; a pure quantity increase
             // re-rests at the same price without matching.
-            match(*replacement, result.trades, is_self);
-            result.filled_quantity = new_quantity - replacement->remaining;
+            match(replacement, result.trades, is_self);
+            result.filled_quantity = new_quantity - replacement.remaining;
         }
 
-        if (replacement->remaining == 0) {
+        if (replacement.remaining == 0) {
             result.status = OrderStatus::FILLED;
         }
         else if (is_self) {
             result.status = OrderStatus::CANCELLED;
         }
         else {
-            book_.insert(*replacement);
+            book_.insert(replacement);
             result.status = OrderStatus::MODIFIED;
         }
 

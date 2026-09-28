@@ -19,7 +19,7 @@
 // Defaults: producers = min(hardware_concurrency, 8), orders = 200000, symbols = 4.
 
 #include "engine/Exchange.hpp"
-#include "engine/Order.hpp"
+#include "engine/OrderTypes.hpp"
 #include "engine/Types.hpp"
 
 #include <algorithm>
@@ -51,8 +51,8 @@ struct Config {
     const unsigned hw = std::thread::hardware_concurrency();
     Config cfg;
     cfg.producers = std::min<std::size_t>(hw == 0 ? 4 : hw, 8);
-    cfg.orders_per_producer = 200'000;
-    cfg.symbols = 4;
+    cfg.orders_per_producer = 200'0000;
+    cfg.symbols = 8;
 
     auto parse = [](const char* s, std::size_t fallback) -> std::size_t {
         char* end = nullptr;

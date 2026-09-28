@@ -1,11 +1,11 @@
 #pragma once
-#include "Order.hpp"
+#include "OrderTypes.hpp"
 
 namespace Engine {
-    struct Order;
+    struct OrderTypes;
 
     struct OrderListIterator {
-        Order* current;
+        OrderTypes* current;
 
         OrderListIterator& operator++() { current = current->next_in_list; return *this; }
         OrderListIterator& operator--() { current = current->prev_in_list; return *this; }
@@ -13,6 +13,6 @@ namespace Engine {
             return current == other.current;
         }
 
-        Order& operator*() const { return *current; }
+        OrderTypes& operator*() const { return *current; }
     };
 }

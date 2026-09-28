@@ -9,7 +9,7 @@ namespace Engine {
           record_latency_(record_latency) {
 
         if (out != nullptr) {
-            sink_ = std::make_unique<Sink>(symbol_, *out, max_batch, capacity);
+            sink_ = std::make_unique<Sink>(symbol_, *out, capacity * 5); // Bigger capacity for Sink Queue
         }
     }
 
@@ -45,8 +45,9 @@ namespace Engine {
         }
     }
 
-    void SymbolWorker::post(Command command) {
-        queue_.push(std::move(command));
+    void SymbolWorker::post(const Command &command) {
+        queue_.push(command);
+        //while (!queue_.push_nolock(command));
     }
 
     void SymbolWorker::run() {
@@ -55,8 +56,21 @@ namespace Engine {
         while (true) {
             const size_t n = queue_.drain(batch, max_batch_);
             if (n == 0) {
-                break; // Queue is closed
+                if (queue_.closed()) {
+                    if (!post_close) {
+                        post_close = true;
+                        continue;   // Run OLT
+                    }
+                    break;
+                }
+                // Let producers push for a while
+                std::this_thread::yield();
+                continue;
             }
+            /*
+            if (n == 0) {
+                break; // Queue is closed
+            }*/
 
             for (size_t i = 0; i < n; ++i) {
                 auto submitResult = engine_.submit(batch[i].order_id, batch[i].request);

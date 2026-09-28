@@ -12,7 +12,7 @@
 
 #include "engine/Exchange.hpp"
 #include "engine/MatchEngine.hpp"
-#include "engine/Order.hpp"
+#include "engine/OrderTypes.hpp"
 #include "engine/Types.hpp"
 
 using namespace Engine;

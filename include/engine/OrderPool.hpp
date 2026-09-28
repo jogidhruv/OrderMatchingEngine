@@ -1,12 +1,12 @@
 #pragma once
 #include <cassert>
 
-#include "Order.hpp"
+#include "OrderTypes.hpp"
 
 namespace Engine {
 
     struct Chunk {
-        Order objects_[1024]{};
+        OrderTypes objects_[512]{};
         Chunk* next_ = nullptr;
     };
 
@@ -24,17 +24,17 @@ namespace Engine {
             }
         }
 
-        Order* take() {
+        OrderTypes* take() {
             if (!free_) {
                 grow();
             }
 
-            Order* o = free_;
+            OrderTypes* o = free_;
             free_ = free_->next_;
             return o;
         }
 
-        void release(Order* o) {
+        void release(OrderTypes* o) {
             assert(o);
             // Reset the order fields
             o->next_in_list = nullptr;
@@ -56,13 +56,13 @@ namespace Engine {
             Chunk* chunk = new Chunk();
             chunk->next_ = chunk_;
             chunk_ = chunk;
-            for (Order& order : chunk->objects_) {
+            for (OrderTypes& order : chunk->objects_) {
                 order.next_ = free_;
                 free_ = &order;
             }
         }
 
-        Order* free_ = nullptr;
+        OrderTypes* free_ = nullptr;
         Chunk* chunk_ = nullptr;
     };
 

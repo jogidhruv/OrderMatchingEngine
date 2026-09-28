@@ -12,7 +12,7 @@
 #include "test_framework.hpp"
 
 #include "engine/Exchange.hpp"
-#include "engine/Order.hpp"
+#include "engine/OrderTypes.hpp"
 #include "engine/Types.hpp"
 
 #include <filesystem>

@@ -1,20 +1,23 @@
 #pragma once
 #include <thread>
 
-#include "CommandQueue.hpp"
+#include "BoundedBlockingQueue.hpp"
+#include "MatchEngine.hpp"
 #include "Sink.hpp"
 
 namespace Engine {
+    using CommandQueue = BoundedBlockingQueue<Command>;
+
     class SymbolWorker {
     public:
-        explicit SymbolWorker(std::string symbol, std::ostream* out, bool record_latency, size_t capacity = 512, size_t max_batch = 256);
+        explicit SymbolWorker(std::string symbol, std::ostream* out, bool record_latency, size_t capacity = 4096, size_t max_batch = 256);
         ~SymbolWorker();
 
         void start();
         void stop();
 
         // Exchange will post the command
-        void post(Command command);
+        void post(const Command &command);
 
         // Used for benchmark program
         [[nodiscard]] const std::vector<uint64_t>& get_latencies() const;
@@ -32,6 +35,7 @@ namespace Engine {
         std::vector<uint64_t> latencies_;  // Store latencies for benchmark program
         bool stopped_{false};
         bool started_{false};
+        bool post_close{false};
 
     };
 }
