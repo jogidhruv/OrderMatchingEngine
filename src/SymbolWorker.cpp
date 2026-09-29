@@ -7,7 +7,7 @@ namespace Engine {
           symbol_(std::move(symbol)),
           max_batch_(max_batch),
           record_latency_(record_latency) {
-
+        //latencies_.reserve(2000000);
         if (out != nullptr) {
             sink_ = std::make_unique<Sink>(symbol_, *out, capacity * 5); // Bigger capacity for Sink Queue
         }

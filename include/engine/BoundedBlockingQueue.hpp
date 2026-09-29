@@ -10,7 +10,7 @@ namespace Engine {
     public:
         explicit BoundedBlockingQueue(size_t capacity)
             : capacity_(capacity) {
-            ring_.reserve(capacity_);
+            ring_.resize(capacity_);
         }
 
         void push(T value) {
