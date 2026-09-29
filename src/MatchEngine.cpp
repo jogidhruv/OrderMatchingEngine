@@ -28,46 +28,21 @@ namespace Engine
 
     void MatchingEngine::match(OrderTypes &incoming, vector<Trade> &out, bool& is_self) {
         const bool is_market = incoming.type == OrderType::Market;
+        while (incoming.remaining > 0) {
+            OrderTypes* maker = incoming.is_buy() ? book_.best_ask() : book_.best_bid();
+            if (!maker) break;
 
-        if (incoming.is_buy()) {
-            while (incoming.remaining > 0) {
-                OrderTypes* maker = book_.best_ask();
-
-                if (maker == nullptr) {
-                    break;
-                }
-
-                if (maker->client_id == incoming.client_id) {
-                    is_self = true; // STP
-                    break;
-                }
-
-                if (!is_market && maker->price > incoming.price) {
-                    break;
-                }
-
-                execute(*maker, incoming, out);
+            if (maker->client_id == incoming.client_id) {
+                is_self = true; // STP
+                break;
             }
-        }
-        else {
-            while (incoming.remaining > 0) {
-                OrderTypes* maker = book_.best_bid();
 
-                if (maker == nullptr) {
-                    break;
-                }
-
-                if (maker->client_id == incoming.client_id) {
-                    is_self = true; // STP
-                    break;
-                }
-
-                if (!is_market && maker->price < incoming.price) {
-                    break;
-                }
-
-                execute(*maker, incoming, out);
+            const auto price_diff = static_cast<int64_t>(maker->price) - static_cast<int64_t>(incoming.price);
+            if (const auto dir = (price_diff >> 63) & 1; !is_market & (price_diff != 0) & (incoming.is_buy() ^ dir)) {
+                break;
             }
+
+            execute(*maker, incoming, out);
         }
     }
 
@@ -168,7 +143,7 @@ namespace Engine
         result.clientOrderId = request.clientOrderId;
 
         OrderTypes* resting = book_.find(request.clientId, request.clientOrderId);
-        if (resting == nullptr) {
+        if (!resting) {
             result.status = OrderStatus::UNKNOWN;
             result.rejectReason = RejectReason::UnknownOrderId;
             return result;
@@ -176,6 +151,7 @@ namespace Engine
 
         const uint64_t new_price = request.price;
         const uint64_t new_quantity = request.quantity;
+        result.rejectReason = RejectReason::None;
 
         if (new_quantity == 0) {
             // A modify down to zero quantity is treated as a cancel.

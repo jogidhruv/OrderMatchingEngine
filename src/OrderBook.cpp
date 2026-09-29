@@ -7,29 +7,13 @@ namespace Engine {
     }
 
     bool OrderBook::insert(OrderTypes& order) {
-        if (order.remaining <= 0) {
-            return false;
-        }
         if (index_.contains(order.id)) {
             return false;
         }
-        if (order.is_buy())
-        {
-            auto& level = bids_[order.price];
-            level.insert(level.end(), order);
-            //level.insert(&order);
-            //index_.emplace(order.id, &order);
-            index_.emplace(order.id, --level.end());
-        }
-        else
-        {
-            auto& level = asks_[order.price];
-            level.insert(level.end(), order);
-            //level.insert(&order);
-            //index_.emplace(order.id, &order);
-            index_.emplace(order.id, --level.end());
-        }
 
+        auto& level = order.is_buy() ? bids_[order.price] : asks_[order.price];
+        level.insert(level.end(), order);
+        index_.emplace(order.id, --level.end());
         // Duplicate orders are already checked before reaching here
         orders_.insert({ {order.client_id, order.client_order_id}, order.id });
         return true;
@@ -53,27 +37,12 @@ namespace Engine {
         }
 
         auto node = it->second;
-        if (node->is_buy())
-        {
-            auto level = bids_.find(node->price);
-            level->second.erase(node);
-            //level->second.remove(node);
-            //order_pool_.release(node);
-            if (level->second.empty())
-            {
-                bids_.erase(level);
-            }
-        }
-        else
-        {
-            auto level = asks_.find(node->price);
-            level->second.erase(node);
-            //level->second.remove(node);
-            //order_pool_.release(node);
-            if (level->second.empty())
-            {
-                asks_.erase(level);
-            }
+        const bool isBuy = node->is_buy();
+        auto level = isBuy ? bids_.find(node->price) : asks_.find(node->price);
+        level->second.erase(node);
+        if (level->second.empty()) {
+            if (isBuy) bids_.erase(level);
+            else asks_.erase(level);
         }
         index_.erase(it);
         orders_.erase(oit);
@@ -100,7 +69,6 @@ namespace Engine {
     bool OrderBook::empty() const {
         return index_.empty();
     }
-
 
     const OrderBook::BidMap& OrderBook::bids() const {
         return bids_;
