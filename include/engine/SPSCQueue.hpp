@@ -3,7 +3,7 @@
 #include <vector>
 
 namespace Engine {
-    template <typename T>
+    template <typename T> requires std::is_default_constructible_v<T>
     class SPSCQueue {
         std::vector<T> ring_;
         std::atomic<size_t> tail_{1};
@@ -13,7 +13,7 @@ namespace Engine {
 
     public:
         explicit SPSCQueue(const size_t capacity) : capacity_(capacity) {
-            ring_.reserve(capacity_);
+            ring_.resize(capacity_);
         }
 
         bool push(T value) {
