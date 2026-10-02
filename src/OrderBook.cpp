@@ -26,12 +26,23 @@ namespace Engine {
         }
 
         auto node = it->second;
-        const bool isBuy = node->is_buy();
-        auto level = isBuy ? bids_.find(node->price) : asks_.find(node->price);
-        level->second.erase(node);
-        if (level->second.empty()) {
-            if (isBuy) bids_.erase(level);
-            else asks_.erase(level);
+        if (node->is_buy()) {
+            auto level = bids_.find(node->price);
+            if (level->second.size() == 1) {
+                bids_.erase(level);
+            }
+            else {
+                level->second.erase(node);
+            }
+        }
+        else {
+            auto level = asks_.find(node->price);
+            if (level->second.size() == 1) {
+                asks_.erase(level);
+            }
+            else {
+                level->second.erase(node);
+            }
         }
         index_.erase(it);
         return true;

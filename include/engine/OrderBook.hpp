@@ -1,7 +1,7 @@
 #pragma once
 
 #include <list>
-#include <map>
+#include <flat_map>
 #include <unordered_map>
 
 #include "OrderList.hpp"
@@ -13,8 +13,8 @@ namespace Engine
     class OrderBook
     {
         public:
-            using AskMap = std::map<uint64_t, std::list<OrderTypes>>;
-            using BidMap = std::map<uint64_t, std::list<OrderTypes>, greater<>>;
+            using AskMap = std::flat_map<uint64_t, std::list<OrderTypes>>;
+            using BidMap = std::flat_map<uint64_t, std::list<OrderTypes>, greater<>>;
 
             // Inserts the order into internal structures. Updates AskMap / BidMap, index for quickly retrieving
             // the order for deletions and client-key -> globally unique order ID map.

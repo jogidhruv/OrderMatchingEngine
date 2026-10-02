@@ -50,7 +50,7 @@ namespace Engine {
                 out[i] = std::move(ring_[head_].data);  // reuse caller's pre-sized slots
                 head_ = (head_ + 1) % capacity_;
             }
-            size_.fetch_sub(n, std::memory_order_release);
+            size_.fetch_sub(n, std::memory_order_relaxed);
             return n;
         }
 
