@@ -27,7 +27,7 @@ namespace Engine
             // active order exists.
             bool remove(uint64_t clientId, uint64_t clientOrderId);
 
-            OrderTypes* take_from_pool() { return order_pool_.take(); };
+            //OrderTypes* take_from_pool() { return order_pool_.take(); };
 
             // Read Only accesses
             [[nodiscard]] const AskMap& asks() const;
@@ -44,7 +44,7 @@ namespace Engine
         private:
             AskMap asks_;
             BidMap bids_;
-            OrderPool order_pool_;
+            //OrderPool order_pool_;
             //unordered_map<uint64_t, Order*> index_;  // Global unique order ID -> Iterator of the actual Order in the maps
 
             using Key = std::pair<uint64_t, uint64_t>;

@@ -15,8 +15,6 @@ namespace Engine {
         alignas(64) size_t head_{0};
         alignas(64) size_t tail_{0};
         alignas(64) std::atomic<size_t> size_{0};
-
-        // Synchronization to avoid queue overflow and consumer trying to read empty queue issues.
         std::mutex mutex_;
         std::atomic<bool> closed_{false};
     public:

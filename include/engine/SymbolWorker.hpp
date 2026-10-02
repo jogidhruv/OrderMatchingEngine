@@ -26,16 +26,15 @@ namespace Engine {
         void run(); // Consumer loop; Single consumer thread for executing the commands from command queue
 
         MatchingEngine engine_;
-        CommandQueue queue_;
-        std::unique_ptr<Sink> sink_;
-        std::string symbol_;
         size_t max_batch_;
-        std::thread consumer_;
+        CommandQueue queue_;
         bool record_latency_;  // To record latencies only for benchmark workloads
         std::vector<uint64_t> latencies_;  // Store latencies for benchmark program
+        std::unique_ptr<Sink> sink_;
         bool stopped_{false};
         bool started_{false};
         bool post_close{false};
-
+        std::string symbol_;
+        std::thread consumer_;
     };
 }

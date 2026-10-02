@@ -72,8 +72,7 @@ endif()
 # ---------------------------------------------------------------------------
 add_library(engine STATIC
     src/OrderBook.cpp
-    src/OrderIdGenerator.cpp
-    src/MatchEngine.cpp
+        src/MatchEngine.cpp
     src/SymbolWorker.cpp
     src/Exchange.cpp
     src/Sink.cpp
