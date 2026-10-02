@@ -3,10 +3,10 @@
 
 namespace Engine {
     SymbolWorker::SymbolWorker(std::string symbol, std::ostream* out, bool record_latency, size_t capacity, size_t max_batch)
-        : queue_(capacity),
-          symbol_(std::move(symbol)),
-          max_batch_(max_batch),
-          record_latency_(record_latency) {
+        : max_batch_(max_batch),
+          queue_(capacity),
+          record_latency_(record_latency),
+          symbol_(std::move(symbol)) {
         //latencies_.reserve(2000000);
         if (out != nullptr) {
             sink_ = std::make_unique<Sink>(symbol_, *out, capacity * 5); // Bigger capacity for Sink Queue

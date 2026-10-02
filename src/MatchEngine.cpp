@@ -105,7 +105,7 @@ namespace Engine
         incoming.quantity = request.quantity;
         incoming.remaining = request.quantity;
         incoming.price = request.price;
-        incoming.timestamp = now_ns();
+        //incoming.timestamp = now_ns();
 
         SubmitResult result;
         result.rejectReason = RejectReason::None;
@@ -175,7 +175,7 @@ namespace Engine
         replacement.price = new_price;
         replacement.quantity = new_quantity;
         replacement.remaining = new_quantity;
-        replacement.timestamp = now_ns();
+        //replacement.timestamp = now_ns();
         book_.remove(resting->client_id, resting->client_order_id);
 
         bool is_self = false;

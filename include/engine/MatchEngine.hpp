@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "OrderBook.hpp"
-#include "OrderPool.hpp"
 #include "MatchEngineTypes.hpp"
 #include "Types.hpp"
 
