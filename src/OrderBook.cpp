@@ -1,38 +1,27 @@
 #include "engine/OrderBook.hpp"
-#include "engine/MatchEngine.hpp"
 
 namespace Engine {
     bool OrderBook::orderExists(const OrderRequest &order) const {
-        return orders_.contains({ order.clientId, order.clientOrderId });
+        return index_.contains({ order.clientId, order.clientOrderId });
+    }
+
+    OrderTypes* OrderBook::find(const uint64_t clientId, const uint64_t clientOrderId) {
+        const auto it = index_.find({clientId, clientOrderId});
+        if (it == index_.end()) return nullptr;
+        return &*it->second;
     }
 
     bool OrderBook::insert(OrderTypes& order) {
-        if (index_.contains(order.id)) {
-            return false;
-        }
-
+        // Validation step already confirms this is a new order
         auto& level = order.is_buy() ? bids_[order.price] : asks_[order.price];
         level.insert(level.end(), order);
-        index_.emplace(order.id, --level.end());
-        // Duplicate orders are already checked before reaching here
-        orders_.insert({ {order.client_id, order.client_order_id}, order.id });
+        index_.insert({{order.client_id, order.client_order_id}, --level.end()});
         return true;
     }
 
     bool OrderBook::remove(const uint64_t clientId, const uint64_t clientOrderId) {
-        // Resolve the client key -> global order id. Absent means there is no
-        // active order to remove (e.g. a cancel of an already-completed order):
-        // return false and leave every structure untouched.
-        const auto oit = orders_.find({ clientId, clientOrderId });
-        if (oit == orders_.end()) {
-            return false;
-        }
-
-        auto it = index_.find(oit->second);
+        const auto it = index_.find({ clientId, clientOrderId });
         if (it == index_.end()) {
-            // index_ and orders_ are meant to stay in lockstep; if the index is
-            // somehow missing, still drop the stale client-key entry.
-            orders_.erase(oit);
             return false;
         }
 
@@ -45,17 +34,7 @@ namespace Engine {
             else asks_.erase(level);
         }
         index_.erase(it);
-        orders_.erase(oit);
         return true;
-    }
-
-    OrderTypes* OrderBook::find(const uint64_t clientId, const uint64_t clientOrderId) {
-        auto oit = orders_.find({ clientId, clientOrderId });
-        if (oit == orders_.end()) {
-            return nullptr;
-        }
-        auto it = index_.find(oit->second);
-        return it == index_.end() ? nullptr : &(*it->second);
     }
 
     OrderTypes* OrderBook::best_bid() {

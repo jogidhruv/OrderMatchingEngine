@@ -75,9 +75,7 @@ namespace Engine {
         if (rr != RejectReason::None) {
             return rr;
         }
-
-        const auto order_id = ids_.next(); // Generate globally unique order ID
-        symbol_workers_.at(symbol)->post({ .order_id = order_id, .request = request, .enqueue_ns = now_ns() });
+        symbol_workers_.at(symbol)->post({ .request = request, .enqueue_ns = now_ns() });
         return rr;
     }
 

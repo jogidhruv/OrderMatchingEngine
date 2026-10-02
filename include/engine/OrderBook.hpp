@@ -13,8 +13,8 @@ namespace Engine
     class OrderBook
     {
         public:
-            using AskMap = map<uint64_t, std::list<OrderTypes>>;
-            using BidMap = map<uint64_t, std::list<OrderTypes>, greater<>>;
+            using AskMap = std::map<uint64_t, std::list<OrderTypes>>;
+            using BidMap = std::map<uint64_t, std::list<OrderTypes>, greater<>>;
 
             // Inserts the order into internal structures. Updates AskMap / BidMap, index for quickly retrieving
             // the order for deletions and client-key -> globally unique order ID map.
@@ -29,11 +29,6 @@ namespace Engine
 
             OrderTypes* take_from_pool() { return order_pool_.take(); };
 
-            // Resolves the active order by client key (clientId, clientOrderId).
-            // Returns nullptr when it is not currently resting. Used during order
-            // modification.
-            [[nodiscard]] OrderTypes* find(uint64_t clientId, uint64_t clientOrderId);
-
             // Read Only accesses
             [[nodiscard]] const AskMap& asks() const;
             [[nodiscard]] const BidMap& bids() const;
@@ -44,13 +39,13 @@ namespace Engine
 
             [[nodiscard]] MarketData top_of_book() const;
             [[nodiscard]] bool orderExists(const OrderRequest& order) const;
+            [[nodiscard]] OrderTypes* find(uint64_t clientId, uint64_t clientOrderId);
 
         private:
             AskMap asks_;
             BidMap bids_;
             OrderPool order_pool_;
             //unordered_map<uint64_t, Order*> index_;  // Global unique order ID -> Iterator of the actual Order in the maps
-            unordered_map<uint64_t, std::list<OrderTypes>::iterator> index_;
 
             using Key = std::pair<uint64_t, uint64_t>;
 
@@ -72,7 +67,7 @@ namespace Engine
             };
 
             // Used for checking duplicate and unknown orders from clients
-            std::unordered_map<Key, uint64_t, KeyHash, KeyEqual> orders_;
+            std::unordered_map<Key, std::list<OrderTypes>::iterator, KeyHash, KeyEqual> index_;
     };
 
 }

@@ -2,7 +2,6 @@
 #include <vector>
 
 #include "MatchEngine.hpp"
-#include "OrderIdGenerator.hpp"
 #include "SymbolWorker.hpp"
 
 namespace Engine {
@@ -31,8 +30,5 @@ namespace Engine {
         // File streams for each symbol worker to log emit logs into different files
         std::unordered_map<std::string, std::ofstream> ofs_;
         std::unordered_map<std::string, std::unique_ptr<SymbolWorker>> symbol_workers_;
-
-        // Globally unique order ID generator
-        OrderIdGenerator ids_;
     };
 }

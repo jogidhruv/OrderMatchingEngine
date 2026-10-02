@@ -12,17 +12,14 @@ namespace Engine
 
     void MatchingEngine::execute(OrderTypes& maker, OrderTypes& taker, vector<Trade>& out) {
         const uint64_t quantity = min(maker.remaining, taker.remaining);
-        const uint64_t price = maker.price;
-
-        maker.remaining -= quantity;
         taker.remaining -= quantity;
-        out.push_back(Trade{ .maker_order_id = maker.id, .taker_order_id = taker.id, .price = price, .quantity = quantity });
+        out.push_back(Trade{ .maker_order_id = maker.client_order_id,
+            .taker_order_id = taker.client_order_id, .price = maker.price, .quantity = quantity });
 
-        if (maker.remaining == 0) {
+        if (maker.remaining == quantity) {
             // maker is the resting order so needs to be cleaned up if fully filled
             book_.remove(maker.client_id, maker.client_order_id);
         }
-
         // taker is incoming so it will be handled after all the immediate matches are executed
     }
 
@@ -142,17 +139,8 @@ namespace Engine
         result.clientId = request.clientId;
         result.clientOrderId = request.clientOrderId;
 
-        OrderTypes* resting = book_.find(request.clientId, request.clientOrderId);
-        if (!resting) {
-            result.status = OrderStatus::UNKNOWN;
-            result.rejectReason = RejectReason::UnknownOrderId;
-            return result;
-        }
-
-        const uint64_t new_price = request.price;
         const uint64_t new_quantity = request.quantity;
         result.rejectReason = RejectReason::None;
-
         if (new_quantity == 0) {
             // A modify down to zero quantity is treated as a cancel.
             book_.remove(request.clientId, request.clientOrderId);
@@ -160,11 +148,13 @@ namespace Engine
             return result;
         }
 
+        OrderTypes* resting = book_.find(request.clientId, request.clientOrderId);
+        // Valid order should always be there because checked earlier
+        const uint64_t new_price = request.price;
         const bool price_changed = (new_price != resting->price);
         // Compare against REMAINING: an increase relative to the live remaining
         // quantity loses time priority; anything else may be applied in place.
         const bool quantity_inc = (new_quantity > resting->remaining);
-
         if (!price_changed && !quantity_inc) {
             // Quantity decrease (or no change) at the same price retains priority.
             resting->remaining = new_quantity;

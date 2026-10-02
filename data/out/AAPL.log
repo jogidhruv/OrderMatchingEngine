@@ -1,20 +1,21 @@
 MarketData AAPL bid - - ask 150 100
 MarketData AAPL bid - - ask 150 100
-TRADE AAPL 1 3 150 60
-MarketData AAPL bid - - ask 150 40
-TRADE AAPL 1 4 150 40
-MarketData AAPL bid - - ask 151 50
-TRADE AAPL 2 5 151 50
-MarketData AAPL bid - - ask - -
-MarketData AAPL bid - - ask 152 30
-TRADE AAPL 6 7 152 30
-MarketData AAPL bid - - ask - -
-MarketData AAPL bid 148 25 ask - -
-MarketData AAPL bid - - ask - -
-MarketData AAPL bid 147 25 ask - -
-MarketData AAPL bid 149 30 ask - -
-MarketData AAPL bid 149 30 ask 155 20
-MarketData AAPL bid 149 30 ask 155 20
+TRADE AAPL 101 201 150 60
+MarketData AAPL bid - - ask 150 100
+TRADE AAPL 101 202 150 40
+MarketData AAPL bid - - ask 150 100
+TRADE AAPL 101 203 150 50
+MarketData AAPL bid - - ask 150 100
+MarketData AAPL bid - - ask 150 100
+TRADE AAPL 101 301 150 50
+MarketData AAPL bid - - ask 150 100
+MarketData AAPL bid 148 25 ask 150 100
+MarketData AAPL bid - - ask 150 100
+MarketData AAPL bid 147 25 ask 150 100
+MarketData AAPL bid 149 30 ask 150 100
+MarketData AAPL bid 149 30 ask 150 100
+TRADE AAPL 101 502 150 20
+MarketData AAPL bid 149 30 ask 150 100
 REJECT DuplicateOrderId AAPL 4 402
 REJECT UnknownOrderId AAPL 9 901
 REJECT UnknownOrderId AAPL 9 902

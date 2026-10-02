@@ -10,7 +10,7 @@ namespace Engine {
 
     class SymbolWorker {
     public:
-        explicit SymbolWorker(std::string symbol, std::ostream* out, bool record_latency, size_t capacity = 4096, size_t max_batch = 128);
+        explicit SymbolWorker(std::string symbol, std::ostream* out, bool record_latency, size_t capacity = 4096, size_t max_batch = 256);
         ~SymbolWorker();
 
         void start();

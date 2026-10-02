@@ -1,41 +1,41 @@
 MarketData GOOG bid - - ask 200 10
 MarketData GOOG bid - - ask 200 20
-TRADE GOOG 19 21 200 10
+TRADE GOOG 4001 4003 200 10
 MarketData GOOG bid - - ask 200 10
-TRADE GOOG 20 22 200 10
+TRADE GOOG 4002 4004 200 10
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid - - ask 201 5
 MarketData GOOG bid - - ask 201 5
 MarketData GOOG bid - - ask 201 5
-TRADE GOOG 23 26 201 5
-TRADE GOOG 24 26 202 5
-TRADE GOOG 25 26 203 2
-MarketData GOOG bid - - ask 203 3
+TRADE GOOG 4301 4401 201 5
+TRADE GOOG 4302 4401 202 5
+TRADE GOOG 4303 4401 203 2
+MarketData GOOG bid - - ask 203 5
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid 100 10 ask - -
 MarketData GOOG bid 100 10 ask - -
-TRADE GOOG 28 30 100 10
-TRADE GOOG 29 30 99 5
-MarketData GOOG bid 99 5 ask - -
+TRADE GOOG 4501 4601 100 10
+TRADE GOOG 4502 4601 99 5
+MarketData GOOG bid 99 10 ask - -
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid - - ask 150 10
-TRADE GOOG 32 33 150 10
+TRADE GOOG 4701 4801 150 10
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid - - ask 300 20
 MarketData GOOG bid - - ask 300 40
 MarketData GOOG bid - - ask 300 30
-TRADE GOOG 34 37 300 10
+TRADE GOOG 4901 5101 300 10
 MarketData GOOG bid - - ask 300 20
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid - - ask 400 10
 MarketData GOOG bid - - ask 400 20
 MarketData GOOG bid - - ask 400 25
-TRADE GOOG 40 42 400 10
+TRADE GOOG 5301 5401 400 10
 MarketData GOOG bid - - ask 400 15
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid 90 10 ask - -
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid - - ask 120 10
-TRADE GOOG 46 47 120 10
+TRADE GOOG 5601 5701 120 10
 MarketData GOOG bid - - ask - -
 REJECT UnknownOrderId GOOG 57 57011
