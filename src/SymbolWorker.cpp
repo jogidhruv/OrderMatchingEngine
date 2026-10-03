@@ -73,7 +73,7 @@ namespace Engine {
             }*/
 
             for (size_t i = 0; i < n; ++i) {
-                auto submitResult = engine_.submit(batch[i].order_id, batch[i].request);
+                auto submitResult = engine_.submit(batch[i].request);
 
                 // Record the latency. This will indicate the request latency from when it got into Exchange
                 // to it got executed by the single consumer thread.

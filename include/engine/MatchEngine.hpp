@@ -17,7 +17,7 @@ namespace Engine
         MatchingEngine() = default;
 
         // Invoked by the consumer thread of SymbolWorker to actually execute the order
-        SubmitResult submit(uint64_t orderId, const OrderRequest& request);
+        SubmitResult submit(const OrderRequest& request);
 
         // Used for telemetry, logging etc.
         [[nodiscard]] const OrderBook& book() const;
@@ -40,7 +40,7 @@ namespace Engine
         SubmitResult modify(const OrderRequest& request);
 
         // Helper for Market, Limit, IOC orders
-        SubmitResult place(uint64_t orderId, const OrderRequest& request);
+        SubmitResult place(const OrderRequest& request);
 
         OrderBook book_;
     };

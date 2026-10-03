@@ -7,10 +7,7 @@
 namespace Engine {
     template <typename T> requires std::is_default_constructible_v<T>
     class BoundedBlockingQueue {
-        struct alignas(64) Padded {
-            T data;
-        };
-        std::vector<Padded> ring_;
+        std::vector<T> ring_;
         size_t capacity_;
         alignas(64) size_t head_{0};
         alignas(64) size_t tail_{0};
@@ -34,7 +31,7 @@ namespace Engine {
                     std::this_thread::yield();
                 }*/
 
-                ring_[tail_].data = std::move(value);
+                ring_[tail_]= std::move(value);
                 tail_ = (tail_ + 1) % capacity_;
             }
             size_.fetch_add(1, std::memory_order_release);
@@ -45,7 +42,7 @@ namespace Engine {
             if (qs == 0) return 0;
             const std::size_t n = std::min(max_batch, qs);
             for (std::size_t i = 0; i < n; ++i) {
-                out[i] = std::move(ring_[head_].data);  // reuse caller's pre-sized slots
+                out[i] = std::move(ring_[head_]);  // reuse caller's pre-sized slots
                 head_ = (head_ + 1) % capacity_;
             }
             size_.fetch_sub(n, std::memory_order_relaxed);

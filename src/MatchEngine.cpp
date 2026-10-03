@@ -68,7 +68,7 @@ namespace Engine
         return result;
     }
 
-    SubmitResult MatchingEngine::submit(uint64_t orderId, const OrderRequest& request) {
+    SubmitResult MatchingEngine::submit(const OrderRequest& request) {
         if (const RejectReason reason = validate(request); reason != RejectReason::None) {
             SubmitResult result{};
             result.rejectReason = reason;
@@ -87,14 +87,13 @@ namespace Engine
             default: ;
         }
 
-        return place(orderId, request);
+        return place(request);
     }
 
 
-    SubmitResult MatchingEngine::place(uint64_t orderId, const OrderRequest& request) {
+    SubmitResult MatchingEngine::place(const OrderRequest& request) {
         //Order* incoming = book_.take_from_pool();
         OrderTypes incoming;
-        incoming.id = orderId;
         incoming.client_id = request.clientId;
         incoming.client_order_id = request.clientOrderId;
         incoming.side = request.side;
@@ -102,7 +101,6 @@ namespace Engine
         incoming.quantity = request.quantity;
         incoming.remaining = request.quantity;
         incoming.price = request.price;
-        //incoming.timestamp = now_ns();
 
         SubmitResult result;
         result.rejectReason = RejectReason::None;
@@ -168,7 +166,6 @@ namespace Engine
         replacement.client_order_id = resting->client_order_id;
         replacement.side = resting->side;
         replacement.type = resting->type;
-        replacement.id = resting->id;
         replacement.price = new_price;
         replacement.quantity = new_quantity;
         replacement.remaining = new_quantity;

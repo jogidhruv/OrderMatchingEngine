@@ -74,7 +74,7 @@ namespace Engine {
         if (rr != RejectReason::None) {
             return rr;
         }
-        symbol_workers_.at(symbol)->post({ .request = request, .enqueue_ns = now_ns() });
+        symbol_workers_.at(symbol)->post({ .enqueue_ns = now_ns(), .request = request });
         return rr;
     }
 
