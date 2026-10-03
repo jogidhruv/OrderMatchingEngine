@@ -21,10 +21,6 @@ namespace Engine {
 
     bool OrderBook::remove(const uint64_t clientId, const uint64_t clientOrderId) {
         const auto it = index_.find({ clientId, clientOrderId });
-        if (it == index_.end()) {
-            return false;
-        }
-
         auto node = it->second;
         if (node->is_buy()) {
             auto level = bids_.find(node->price);

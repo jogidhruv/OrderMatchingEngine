@@ -1,8 +1,4 @@
-#include <engine/MatchEngine.hpp>
-
-#include <chrono>
-
-#include "engine/Clock.hpp"
+#include "engine/MatchEngine.hpp"
 
 namespace Engine
 {
@@ -13,10 +9,11 @@ namespace Engine
     void MatchingEngine::execute(OrderTypes& maker, OrderTypes& taker, vector<Trade>& out) {
         const uint64_t quantity = min(maker.remaining, taker.remaining);
         taker.remaining -= quantity;
+        maker.remaining -= quantity;
         out.push_back(Trade{ .maker_order_id = maker.client_order_id,
             .taker_order_id = taker.client_order_id, .price = maker.price, .quantity = quantity });
 
-        if (maker.remaining == quantity) {
+        if (maker.remaining == 0) {
             // maker is the resting order so needs to be cleaned up if fully filled
             book_.remove(maker.client_id, maker.client_order_id);
         }

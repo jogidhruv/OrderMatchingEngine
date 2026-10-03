@@ -41,8 +41,8 @@ namespace Engine
     // MPSC queue
     struct Command {
         uint64_t order_id{};  // Globally unique order ID
-        OrderRequest request{};
         uint64_t enqueue_ns{0}; // Used to calculate latency
+        OrderRequest request{};
     };
 
     // Status of the order after immediate matching once received
