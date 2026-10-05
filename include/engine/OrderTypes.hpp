@@ -31,7 +31,7 @@ namespace Engine
 
     // The request received from client along with the globally unique order ID
     // MPSC queue
-    struct alignas(64) Command {
+    struct Command {
         uint64_t enqueue_ns{0}; // Used to calculate latency
         OrderRequest request{};
     };

@@ -43,17 +43,13 @@ namespace Engine
     RejectReason MatchingEngine::validate(const OrderRequest &order) const {
         // Checks unknown and duplicate order IDs
         RejectReason reason = RejectReason::None;
-        if (order.type == OrderType::Modify || order.type == OrderType::Cancel) {
-            if (!book_.orderExists(order)) {
-                reason = RejectReason::UnknownOrderId;
-            }
+        const bool found = book_.orderExists(order);
+        if (!found && order.type > OrderType::IOC) {
+            reason = RejectReason::UnknownOrderId;
         }
-        else {
-            if (book_.orderExists(order)) {
-                reason = RejectReason::DuplicateOrderId;
-            }
+        else if (found && order.type < OrderType::Cancel) {
+            reason = RejectReason::DuplicateOrderId;
         }
-
         return reason;
     }
 
@@ -84,10 +80,10 @@ namespace Engine
             case OrderType::Modify: {
                 return modify(request);
             }
-            default: ;
+            default: {
+                return place(request);
+            }
         }
-
-        return place(request);
     }
 
 
