@@ -7,7 +7,7 @@ namespace Engine {
           queue_(capacity),
           record_latency_(record_latency),
           symbol_(std::move(symbol)) {
-        //latencies_.reserve(2000000);
+        engine_ = std::make_unique<MatchingEngine>();
         if (out != nullptr) {
             sink_ = std::make_unique<Sink>(symbol_, *out, capacity * 5); // Bigger capacity for Sink Queue
         }
@@ -73,7 +73,7 @@ namespace Engine {
             }*/
 
             for (size_t i = 0; i < n; ++i) {
-                auto submitResult = engine_.submit(batch[i].request);
+                auto submitResult = engine_->submit(batch[i].request);
 
                 // Record the latency. This will indicate the request latency from when it got into Exchange
                 // to it got executed by the single consumer thread.
@@ -85,7 +85,7 @@ namespace Engine {
                     MatchingResult result;
                     result.result = std::move(submitResult);
                     if (result.result.rejectReason == RejectReason::None) {
-                        result.data = engine_.book().top_of_book();
+                        result.data = engine_->book().top_of_book();
                     }
 
                     sink_->publish(std::move(result));

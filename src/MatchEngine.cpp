@@ -94,7 +94,6 @@ namespace Engine
         incoming.client_order_id = request.clientOrderId;
         incoming.side = request.side;
         incoming.type = request.type;
-        incoming.quantity = request.quantity;
         incoming.remaining = request.quantity;
         incoming.price = request.price;
 
@@ -163,7 +162,6 @@ namespace Engine
         replacement.side = resting->side;
         replacement.type = resting->type;
         replacement.price = new_price;
-        replacement.quantity = new_quantity;
         replacement.remaining = new_quantity;
         //replacement.timestamp = now_ns();
         book_.remove(resting->client_id, resting->client_order_id);

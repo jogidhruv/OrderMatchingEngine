@@ -22,7 +22,6 @@ namespace Engine
         uint64_t  client_id;
         uint64_t  client_order_id;  // Sent by the client; Used for cancel / modify orders
         uint64_t  price;
-        uint64_t  quantity;       // original submitted quantity
         uint64_t  remaining;      // quantity still open (decremented on fills)
 
         [[nodiscard]] bool is_buy() const noexcept { return side == Side::BUY; }

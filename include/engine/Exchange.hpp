@@ -26,9 +26,9 @@ namespace Engine {
     private:
         // For sync validations; immediate reject
         [[nodiscard]] RejectReason validate(const OrderRequest& request, const std::string& symbol);
+        std::unordered_map<std::string, std::unique_ptr<SymbolWorker>> symbol_workers_;
 
         // File streams for each symbol worker to log emit logs into different files
         std::unordered_map<std::string, std::ofstream> ofs_;
-        std::unordered_map<std::string, std::unique_ptr<SymbolWorker>> symbol_workers_;
     };
 }
