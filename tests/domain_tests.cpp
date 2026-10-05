@@ -41,7 +41,7 @@ OrderRequest modify(uint64_t cid, uint64_t coid, uint64_t px, uint64_t qty) {
 struct Harness {
     MatchingEngine engine;
     uint64_t next_id = 1;
-    SubmitResult submit(const OrderRequest& r) { return engine.submit(next_id++, r); }
+    SubmitResult submit(const OrderRequest& r) { return engine.submit(r); }
     const OrderBook& book() const { return engine.book(); }
 };
 
