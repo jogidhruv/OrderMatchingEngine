@@ -17,12 +17,12 @@ namespace Engine
 
     // The struct created by the matching engine and then stored in the order book
     struct OrderTypes {
-        Side      side;
-        OrderType type;
         uint64_t  client_id;
         uint64_t  client_order_id;  // Sent by the client; Used for cancel / modify orders
         uint64_t  price;
         uint64_t  remaining;      // quantity still open (decremented on fills)
+        Side      side;
+        OrderType type;
 
         [[nodiscard]] bool is_buy() const noexcept { return side == Side::BUY; }
         [[nodiscard]] bool is_filled() const noexcept { return remaining <= 0; }
@@ -31,8 +31,8 @@ namespace Engine
     // The request received from client along with the globally unique order ID
     // MPSC queue
     struct Command {
-        uint64_t enqueue_ns{0}; // Used to calculate latency
         OrderRequest request{};
+        uint64_t enqueue_ns{0}; // Used to calculate latency
     };
 
     // Status of the order after immediate matching once received

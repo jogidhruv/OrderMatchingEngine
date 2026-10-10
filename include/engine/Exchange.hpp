@@ -9,13 +9,11 @@ namespace Engine {
     public:
         explicit Exchange(const std::vector<std::string>& symbols, std::string outdir, bool record_latency = false);
 
-        ~Exchange();
-
         // For clients to submit their requests to the exchange
         [[nodiscard]] RejectReason submit(const std::string& symbol, const OrderRequest& request);
 
         // Start all the symbol workers
-        void start() const;
+        void start();
 
         // Stop the exchange
         void stop();
@@ -26,9 +24,6 @@ namespace Engine {
     private:
         // For sync validations; immediate reject
         [[nodiscard]] RejectReason validate(const OrderRequest& request, const std::string& symbol);
-        std::unordered_map<std::string, std::unique_ptr<SymbolWorker>> symbol_workers_;
-
-        // File streams for each symbol worker to log emit logs into different files
-        std::unordered_map<std::string, std::ofstream> ofs_;
+        std::unordered_map<std::string, SymbolWorker> symbol_workers_;
     };
 }

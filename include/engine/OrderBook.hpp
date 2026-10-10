@@ -16,7 +16,7 @@ namespace Engine
 
             // Inserts the order into internal structures. Updates AskMap / BidMap, index for quickly retrieving
             // the order for deletions and client-key -> globally unique order ID map.
-            bool insert(OrderTypes& order);
+            void insert(OrderTypes& order);
 
             // Removes the active order identified by the client key
             // (clientId, clientOrderId) from EVERY internal structure: the price
@@ -24,6 +24,7 @@ namespace Engine
             // and the client-key map. Returns false (graceful no-op) when no such
             // active order exists.
             bool remove(uint64_t clientId, uint64_t clientOrderId);
+            //void remove(std::list<OrderTypes>::iterator it);
 
             //OrderTypes* take_from_pool() { return order_pool_.take(); };
 
@@ -59,6 +60,7 @@ namespace Engine
 
             // Equality functor for Key
             struct KeyEqual {
+                //using value_type = std::pair<uint64_t, uint64_t>;
                 bool operator()(const Key& a, const Key& b) const noexcept {
                     return a.first == b.first && a.second == b.second;
                 }

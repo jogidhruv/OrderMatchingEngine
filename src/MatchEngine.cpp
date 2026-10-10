@@ -54,25 +54,18 @@ namespace Engine
     }
 
     SubmitResult MatchingEngine::cancel(const OrderRequest &request) {
-        // Reach here only when validate() has proven the order exists and can be
-        // cancelled. Resolve purely by client key.
-        book_.remove(request.clientId, request.clientOrderId);
         SubmitResult result{};
-        result.status = OrderStatus::CANCELLED;
         result.clientId = request.clientId;
         result.clientOrderId = request.clientOrderId;
+        if (book_.remove(request.clientId, request.clientOrderId)) {
+            result.status = OrderStatus::CANCELLED;
+            return result;
+        }
+        result.rejectReason = RejectReason::UnknownOrderId;
         return result;
     }
 
     SubmitResult MatchingEngine::submit(const OrderRequest& request) {
-        if (const RejectReason reason = validate(request); reason != RejectReason::None) {
-            SubmitResult result{};
-            result.rejectReason = reason;
-            result.clientId = request.clientId;
-            result.clientOrderId = request.clientOrderId;
-            return result;
-        }
-
         switch (request.type) {
             case OrderType::Cancel: {
                 return cancel(request);
@@ -86,21 +79,17 @@ namespace Engine
         }
     }
 
-
     SubmitResult MatchingEngine::place(const OrderRequest& request) {
-        //Order* incoming = book_.take_from_pool();
-        OrderTypes incoming;
-        incoming.client_id = request.clientId;
-        incoming.client_order_id = request.clientOrderId;
-        incoming.side = request.side;
-        incoming.type = request.type;
-        incoming.remaining = request.quantity;
-        incoming.price = request.price;
-
-        SubmitResult result;
-        result.rejectReason = RejectReason::None;
-        result.clientId = request.clientId;
-        result.clientOrderId = request.clientOrderId;
+        if (book_.orderExists(request)) {
+            return {.clientId = request.clientId, .clientOrderId = request.clientOrderId, .rejectReason = RejectReason::DuplicateOrderId};
+        }
+        OrderTypes incoming{ .client_id = request.clientId,
+            .client_order_id = request.clientOrderId , .price = request.price, .remaining = request.quantity,
+            .side = request.side, .type = request.type };
+        SubmitResult result{
+            .status = OrderStatus::RESTING, .clientId = request.clientId, .clientOrderId = request.clientOrderId,
+            .rejectReason = RejectReason::None
+        };
         bool is_self = false;
         match(incoming, result.trades, is_self);
         result.filled_quantity = request.quantity - incoming.remaining;
@@ -108,29 +97,26 @@ namespace Engine
         if (incoming.remaining == 0) {
             result.status = OrderStatus::FILLED;
         }
-        else if (request.type == OrderType::Market || request.type == OrderType::IOC) {
+        else if (request.type == OrderType::Market || request.type == OrderType::IOC || is_self) {
             // Market/IOC leftover is never rested: liquidity is exhausted (or STP
             // triggered), so the unfilled remainder is cancelled.
             result.status = OrderStatus::CANCELLED;
         }
-        else if (is_self) {
-            result.status = OrderStatus::CANCELLED;
-        }
         else {
             book_.insert(incoming);
-            result.status = OrderStatus::RESTING; // Limit remainder rests on the book
+            //result.status = OrderStatus::RESTING; // Limit remainder rests on the book
         }
 
         return result;
     }
 
     SubmitResult MatchingEngine::modify(const OrderRequest& request) {
-        SubmitResult result;
-        result.clientId = request.clientId;
-        result.clientOrderId = request.clientOrderId;
-
+        OrderTypes* resting = book_.find(request.clientId, request.clientOrderId);
+        if (!resting) {
+            return {.clientId = request.clientId, .clientOrderId = request.clientOrderId, .rejectReason = RejectReason::UnknownOrderId};
+        }
+        SubmitResult result{ .clientId = request.clientId, .clientOrderId = request.clientOrderId, .rejectReason = RejectReason::None };
         const uint64_t new_quantity = request.quantity;
-        result.rejectReason = RejectReason::None;
         if (new_quantity == 0) {
             // A modify down to zero quantity is treated as a cancel.
             book_.remove(request.clientId, request.clientOrderId);
@@ -138,8 +124,6 @@ namespace Engine
             return result;
         }
 
-        OrderTypes* resting = book_.find(request.clientId, request.clientOrderId);
-        // Valid order should always be there because checked earlier
         const uint64_t new_price = request.price;
         const bool price_changed = (new_price != resting->price);
         // Compare against REMAINING: an increase relative to the live remaining
@@ -156,24 +140,23 @@ namespace Engine
         // because remove() invalidates the resting pointer. The global id is
         // preserved through the copy.
         //Order* replacement = book_.take_from_pool();
-        OrderTypes replacement;
-        replacement.client_id = resting->client_id;
-        replacement.client_order_id = resting->client_order_id;
-        replacement.side = resting->side;
-        replacement.type = resting->type;
-        replacement.price = new_price;
-        replacement.remaining = new_quantity;
-        //replacement.timestamp = now_ns();
+        OrderTypes replacement{
+            .client_id = resting->client_id, .client_order_id = resting->client_order_id,
+            .price = new_price, .remaining = new_quantity,
+            .side = resting->side, .type = resting->type
+        };
         book_.remove(resting->client_id, resting->client_order_id);
-
-        bool is_self = false;
-        if (price_changed) {
-            // Only a price change can cross the book; a pure quantity increase
-            // re-rests at the same price without matching.
-            match(replacement, result.trades, is_self);
-            result.filled_quantity = new_quantity - replacement.remaining;
+        if (!price_changed) {
+            book_.insert(replacement);
+            result.status = OrderStatus::MODIFIED;
+            return result;
         }
 
+        bool is_self = false;
+        // Only a price change can cross the book; a pure quantity increase
+        // re-rests at the same price without matching.
+        match(replacement, result.trades, is_self);
+        result.filled_quantity = new_quantity - replacement.remaining;
         if (replacement.remaining == 0) {
             result.status = OrderStatus::FILLED;
         }

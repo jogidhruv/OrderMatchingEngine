@@ -2,27 +2,13 @@
 #include "engine/Exchange.hpp"
 
 #include <filesystem>
-#include <fstream>
 #include <ranges>
 
 namespace Engine {
-    Exchange::~Exchange() = default;
-
     Exchange::Exchange(const std::vector<std::string>& symbols, std::string outdir, bool record_latency) {
         filesystem::create_directories(outdir);
         for (const auto& symbol : symbols) {
-            if (record_latency) {
-                // Workaround for benchmark
-                std::ofstream* out = nullptr;
-                symbol_workers_.try_emplace(symbol, std::make_unique<SymbolWorker>(symbol, out, record_latency));
-                continue;
-            }
-
-            auto filename = outdir + "/" + symbol + ".log";
-            std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
-            ofs_.try_emplace(symbol, std::move(ofs));
-            std::ofstream* out = &ofs_.at(symbol);
-            symbol_workers_.try_emplace(symbol, std::make_unique<SymbolWorker>(symbol, out, record_latency));
+            symbol_workers_.try_emplace(symbol, symbol, outdir, record_latency);
         }
     }
 
@@ -50,22 +36,16 @@ namespace Engine {
         return RejectReason::InvalidOrderType;
     }
 
-    void Exchange::start() const {
+    void Exchange::start() {
         // Start each worker consumer
-        for (const auto& entry : symbol_workers_) {
-            entry.second->start();
+        for (auto &val: symbol_workers_ | views::values) {
+            val.start();
         }
     }
 
     void Exchange::stop() {
-        for (const auto& entry : symbol_workers_) {
-            entry.second->stop();
-        }
-
-        for (auto& [symbol, ofs] : ofs_) {
-            if (ofs.is_open()) {
-                ofs.close();
-            }
+        for (auto &val: symbol_workers_ | views::values) {
+            val.stop();
         }
     }
 
@@ -74,7 +54,7 @@ namespace Engine {
         if (rr != RejectReason::None) {
             return rr;
         }
-        symbol_workers_.at(symbol)->post({ .enqueue_ns = now_ns(), .request = request });
+        symbol_workers_.at(symbol).post({ .request = request, .enqueue_ns = now_ns() });
         return rr;
     }
 
@@ -82,7 +62,7 @@ namespace Engine {
         std::vector<std::vector<std::uint64_t>> latencies;
         latencies.reserve(symbol_workers_.size());
         for (const auto &val: symbol_workers_ | views::values) {
-            latencies.push_back(val->get_latencies());
+            latencies.push_back(val.get_latencies());
         }
 
         return latencies;

@@ -10,13 +10,13 @@ MarketData GOOG bid - - ask 201 5
 TRADE GOOG 4301 4401 201 5
 TRADE GOOG 4302 4401 202 5
 TRADE GOOG 4303 4401 203 2
-MarketData GOOG bid - - ask 203 5
+MarketData GOOG bid - - ask 203 3
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid 100 10 ask - -
 MarketData GOOG bid 100 10 ask - -
 TRADE GOOG 4501 4601 100 10
 TRADE GOOG 4502 4601 99 5
-MarketData GOOG bid 99 10 ask - -
+MarketData GOOG bid 99 5 ask - -
 MarketData GOOG bid - - ask - -
 MarketData GOOG bid - - ask 150 10
 TRADE GOOG 4701 4801 150 10

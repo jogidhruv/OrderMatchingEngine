@@ -1,20 +1,18 @@
 #include "engine/Clock.hpp"
 #include "engine/SymbolWorker.hpp"
 
+#include <iostream>
+
 namespace Engine {
-    SymbolWorker::SymbolWorker(std::string symbol, std::ostream* out, bool record_latency, size_t capacity, size_t max_batch)
+    SymbolWorker::SymbolWorker(const std::string& symbol, const std::string& out, bool record_latency, size_t capacity, size_t max_batch)
         : max_batch_(max_batch),
           queue_(capacity),
           record_latency_(record_latency),
-          symbol_(std::move(symbol)) {
+          symbol_(symbol) {
         engine_ = std::make_unique<MatchingEngine>();
-        if (out != nullptr) {
-            sink_ = std::make_unique<Sink>(symbol_, *out, capacity * 5); // Bigger capacity for Sink Queue
+        if (!record_latency_) {
+            sink_ = std::make_unique<Sink>(symbol_, out, capacity * 5); // Bigger capacity for Sink Queue
         }
-    }
-
-    SymbolWorker::~SymbolWorker() {
-        stop();
     }
 
     void SymbolWorker::start() {
@@ -92,6 +90,7 @@ namespace Engine {
                 }
             }
         }
+        //std::cout << std::this_thread::get_id() << " yielded for " << cnt << " invocation " << invoke << "\n";
     }
 
     const std::vector<uint64_t>& SymbolWorker::get_latencies() const {

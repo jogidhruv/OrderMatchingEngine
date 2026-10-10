@@ -10,8 +10,12 @@ namespace Engine {
 
     class SymbolWorker {
     public:
-        explicit SymbolWorker(std::string symbol, std::ostream* out, bool record_latency, size_t capacity = 4096, size_t max_batch = 256);
-        ~SymbolWorker();
+        explicit SymbolWorker(const std::string& symbol, const std::string& outdir, bool record_latency,
+            size_t capacity = 4096, size_t max_batch = 128);
+        SymbolWorker(const SymbolWorker&) = delete;
+        SymbolWorker(SymbolWorker&&) = delete;
+        SymbolWorker& operator=(const SymbolWorker&) = delete;
+        SymbolWorker& operator=(SymbolWorker&&) = delete;
 
         void start();
         void stop();
@@ -24,7 +28,6 @@ namespace Engine {
 
     private:
         void run(); // Consumer loop; Single consumer thread for executing the commands from command queue
-
         std::unique_ptr<MatchingEngine> engine_;
         size_t max_batch_;
         CommandQueue queue_;

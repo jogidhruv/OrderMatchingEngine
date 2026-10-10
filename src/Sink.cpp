@@ -4,9 +4,9 @@
 
 namespace Engine {
 
-    Sink::Sink(std::string symbol, std::ostream& out, const size_t capacity)
+    Sink::Sink(std::string symbol, const std::string& outdir, const size_t capacity)
         : queue_(capacity),
-          out_(out),
+          out_{outdir + "/" + symbol + ".log", std::ios::out | std::ios::trunc},
           symbol_(std::move(symbol)) {}
 
     void Sink::publish(MatchingResult result) {
@@ -35,7 +35,7 @@ namespace Engine {
         is_stopped_ = true;
     }
 
-    void Sink::ProcessMR(const MatchingResult& mr) const {
+    void Sink::ProcessMR(const MatchingResult& mr) {
         const auto& result = mr.result;
         const auto& data = mr.data;
         if (result.rejectReason != RejectReason::None) {

@@ -15,8 +15,9 @@ namespace Engine {
         alignas(64) size_t head_{0};
         alignas(64) size_t tail_{0};
         alignas(64) std::atomic<size_t> size_{0};
-        std::mutex mutex_;
         std::atomic<bool> closed_{false};
+        std::mutex mutex_;
+
     public:
         explicit BoundedBlockingQueue(size_t capacity)
             : capacity_(capacity) {
@@ -34,21 +35,22 @@ namespace Engine {
                     std::this_thread::yield();
                 }*/
 
-                ring_[tail_].data= std::move(value);
+                ring_[tail_].data= value;
                 tail_ = (tail_ + 1) % capacity_;
             }
-            size_.fetch_add(1, std::memory_order_release);
+            size_.fetch_add(1);
         }
 
         std::size_t drain(std::vector<T>& out, const std::size_t max_batch) {
-            const size_t qs = size_.load(std::memory_order_relaxed);
+            const size_t qs = size_.load();
             if (qs == 0) return 0;
             const std::size_t n = std::min(max_batch, qs);
             for (std::size_t i = 0; i < n; ++i) {
-                out[i] = std::move(ring_[head_].data);  // reuse caller's pre-sized slots
-                head_ = (head_ + 1) % capacity_;
+                out[i] = ring_[(head_ + i) % capacity_].data;  // reuse caller's pre-sized slots
+                //head_ = (head_ + 1) % capacity_;
             }
-            size_.fetch_sub(n, std::memory_order_relaxed);
+            head_ = (head_ + n - 1) % capacity_;
+            size_.fetch_sub(n);
             return n;
         }
 

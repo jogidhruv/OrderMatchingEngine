@@ -11,16 +11,16 @@ namespace Engine {
         return &*it->second;
     }
 
-    bool OrderBook::insert(OrderTypes& order) {
+    void OrderBook::insert(OrderTypes& order) {
         // Validation step already confirms this is a new order
         auto& level = order.is_buy() ? bids_[order.price] : asks_[order.price];
         level.insert(level.end(), order);
         index_.insert({{order.client_id, order.client_order_id}, --level.end()});
-        return true;
     }
 
     bool OrderBook::remove(const uint64_t clientId, const uint64_t clientOrderId) {
         const auto it = index_.find({ clientId, clientOrderId });
+        if (it == index_.end()) return false;
         auto node = it->second;
         if (node->is_buy()) {
             auto level = bids_.find(node->price);
