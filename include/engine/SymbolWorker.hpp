@@ -6,7 +6,7 @@
 #include "Sink.hpp"
 
 namespace Engine {
-    using CommandQueue = BoundedBlockingQueue<Command>;
+    using CommandQueue = BoundedBlockingQueue<Command, 4096>;
 
     class SymbolWorker {
     public:

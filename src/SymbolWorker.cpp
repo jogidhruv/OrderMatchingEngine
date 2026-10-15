@@ -6,7 +6,6 @@
 namespace Engine {
     SymbolWorker::SymbolWorker(const std::string& symbol, const std::string& out, bool record_latency, size_t capacity, size_t max_batch)
         : max_batch_(max_batch),
-          queue_(capacity),
           record_latency_(record_latency),
           symbol_(symbol) {
         engine_ = std::make_unique<MatchingEngine>();
